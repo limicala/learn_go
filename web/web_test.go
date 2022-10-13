@@ -16,11 +16,14 @@ func Test_StartServer(t *testing.T) {
 
 func Test_StartEngine(t *testing.T) {
 	web := New()
-	web.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello Gee")
+	web.GET("/", func(c *Context) {
+		c.String(http.StatusOK, "Hello Spike")
 	})
-	web.Post("/login", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Login Succeed")
+	web.POST("/login", func(c *Context) {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"username": c.PostForm("username"),
+			"password": c.PostForm("password"),
+		})
 	})
 	log.Fatal(web.Run(":9999"))
 }

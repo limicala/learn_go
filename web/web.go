@@ -16,11 +16,11 @@ func (engine *Engine) addRoute(method string, pattern string, handler HandleFunc
 	engine.router.addRoute(method, pattern, handler)
 }
 
-func (engine *Engine) Get(pattern string, handler HandleFunc) {
+func (engine *Engine) GET(pattern string, handler HandleFunc) {
 	engine.addRoute("GET", pattern, handler)
 }
 
-func (engine *Engine) Post(pattern string, handler HandleFunc) {
+func (engine *Engine) POST(pattern string, handler HandleFunc) {
 	engine.addRoute("POST", pattern, handler)
 }
 
@@ -29,5 +29,6 @@ func (engine *Engine) Run(addr string) (err error) {
 }
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	engine.router.handle(w, req)
+	context := newContext(w, req)
+	engine.router.handle(context)
 }

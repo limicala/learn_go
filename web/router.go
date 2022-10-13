@@ -1,11 +1,10 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 )
 
-type HandleFunc func(http.ResponseWriter, *http.Request)
+type HandleFunc func(c *Context)
 type router struct {
 	handlers map[string]HandleFunc
 }
@@ -19,11 +18,11 @@ func (r *router) addRoute(method string, pattern string, handler HandleFunc) {
 	r.handlers[key] = handler
 }
 
-func (r *router) handle(rsp http.ResponseWriter, req *http.Request) {
-	key := req.Method + ":" + req.URL.Path
+func (r *router) handle(c *Context) {
+	key := c.Method + ":" + c.Path
 	if handler, ok := r.handlers[key]; ok {
-		handler(rsp, req)
+		handler(c)
 	} else {
-		fmt.Fprintf(rsp, "404 NOT FOUND: %s\n", req.URL)
+		c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
 	}
 }
