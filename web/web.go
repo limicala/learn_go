@@ -1,21 +1,33 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 )
 
-type Engine struct{}
+type Engine struct {
+	router *router
+}
+
+func New() *Engine {
+	return &Engine{router: newRouter()}
+}
+
+func (engine *Engine) addRoute(method string, pattern string, handler HandleFunc) {
+	engine.router.addRoute(method, pattern, handler)
+}
+
+func (engine *Engine) Get(pattern string, handler HandleFunc) {
+	engine.addRoute("GET", pattern, handler)
+}
+
+func (engine *Engine) Post(pattern string, handler HandleFunc) {
+	engine.addRoute("POST", pattern, handler)
+}
+
+func (engine *Engine) Run(addr string) (err error) {
+	return http.ListenAndServe(addr, engine)
+}
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	switch req.URL.Path {
-	case "/":
-		fmt.Fprintf(w, "URL.Path = %q\n", req.URL.Path)
-	case "/hello":
-		for k, v := range req.Header {
-			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
-		}
-	default:
-		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)
-	}
+	engine.router.handle(w, req)
 }

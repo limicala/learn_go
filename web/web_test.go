@@ -15,6 +15,12 @@ func Test_StartServer(t *testing.T) {
 }
 
 func Test_StartEngine(t *testing.T) {
-	engine := new(Engine)
-	log.Fatal(http.ListenAndServe(":9999", engine))
+	web := New()
+	web.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello Gee")
+	})
+	web.Post("/login", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Login Succeed")
+	})
+	log.Fatal(web.Run(":9999"))
 }
