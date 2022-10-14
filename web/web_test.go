@@ -1,4 +1,4 @@
-package spikeweb
+package web
 
 import (
 	"fmt"
