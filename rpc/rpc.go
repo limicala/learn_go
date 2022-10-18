@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"sync"
 )
 
 /*
@@ -63,19 +64,24 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 	return req, nil
 }
 
-func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interface{}) {
+func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interface{}, sending *sync.Mutex) {
+	sending.Lock()
+	defer sending.Unlock()
 	if err := cc.Write(h, body); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("rpc server: resp", h, body)
 }
 
-func (server *Server) handleRequest(cc codec.Codec, r *request) {
+func (server *Server) handleRequest(cc codec.Codec, r *request, sending *sync.Mutex, wg *sync.WaitGroup) {
+	defer wg.Done()
 	r.replyv = reflect.ValueOf(fmt.Sprintf("rpc resp %d", r.h.Seq))
-	server.sendResponse(cc, r.h, r.replyv.Interface())
+	server.sendResponse(cc, r.h, r.replyv.Interface(), sending)
 }
 
 func (server *Server) serveCodec(cc codec.Codec) {
+	sending := new(sync.Mutex)
+	wg := new(sync.WaitGroup)
 	for {
 		req, err := server.readRequest(cc)
 		if err != nil {
@@ -83,11 +89,14 @@ func (server *Server) serveCodec(cc codec.Codec) {
 				break
 			}
 			req.h.Error = err.Error()
-			server.sendResponse(cc, req.h, struct{}{})
+			server.sendResponse(cc, req.h, struct{}{}, sending)
 			continue
 		}
-		server.handleRequest(cc, req)
+		wg.Add(1)
+		server.handleRequest(cc, req, sending, wg)
 	}
+	wg.Wait()
+	_ = cc.Close()
 }
 
 func (server *Server) serveConn(conn io.ReadWriteCloser) {
