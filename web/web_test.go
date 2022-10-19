@@ -15,6 +15,15 @@ func Test_StartServer(t *testing.T) {
 }
 
 func Test_StartEngine(t *testing.T) {
-	engine := new(Engine)
-	log.Fatal(http.ListenAndServe(":9999", engine))
+	web := New()
+	web.GET("/", func(c *Context) {
+		c.String(http.StatusOK, "Hello Spike")
+	})
+	web.POST("/login", func(c *Context) {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"username": c.PostForm("username"),
+			"password": c.PostForm("password"),
+		})
+	})
+	log.Fatal(web.Run(":9999"))
 }
